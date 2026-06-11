@@ -1,19 +1,12 @@
-using HackerRank1.Entities;
-using HackerRank1.Services;
 using LibraryService.WebAPI.Data;
 using LibraryService.WebAPI.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
 
 namespace LibraryService.WebAPI
 {
@@ -29,53 +22,20 @@ namespace LibraryService.WebAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // 1. jwtSettings binding
-            var jwtSettings = Configuration
-                                .GetSection("JwtSettings")
-                                .Get<JwtSettings>()
-                                ?? throw new InvalidOperationException("Invalid JWT Settings");
+            // CORS: origenes permitidos configurables (appsettings o variables
+            // de entorno Cors__AllowedOrigins__0, ...) para el FE local y el publicado.
+            var allowedOrigins = Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+                                 ?? new[] { "http://localhost:5173" };
 
-            // 2. Registro de DI
-
-            services.AddSingleton(jwtSettings);
-            services.AddScoped<IAuthenticationService, AuthenticationService>();
-
-            // 3. Configurar Authenticacion
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(option =>
-                {
-                    option.TokenValidationParameters = new TokenValidationParameters()
-                    {
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
-
-                        ValidateIssuer = true,
-                        ValidIssuer = jwtSettings.Issuer,
-
-                        ValidateAudience = true,
-                        ValidAudience = jwtSettings.Audience,
-
-                        ValidateLifetime = true,
-                        ClockSkew = TimeSpan.Zero
-                    };
-                });
-
-            // 4. Configurar Autorizacion
-            services.AddAuthorization();
-
-            // 5. Configurar CORS para el FE (Vite dev server)
             services.AddCors(o => o.AddPolicy("Frontend", p => p
-                .WithOrigins("http://localhost:5173")
+                .WithOrigins(allowedOrigins)
                 .AllowAnyHeader()
                 .AllowAnyMethod()));
 
-
-            // Add support for Dependency Injection for internal services (BooksService and LibrariesService)
-            services.AddTransient<ILibrariesService,  LibrariesService>();
-            services.AddTransient<IBooksService,  BooksService>();
+            // Servicio del modulo publico de reportes de fraude.
             services.AddTransient<IFraudService, FraudService>();
 
-            services.AddDbContextPool<LibraryContext>(options =>
+            services.AddDbContextPool<AppDbContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection"), npgsqlOptions =>
                 {
                     npgsqlOptions.EnableRetryOnFailure(
@@ -92,9 +52,9 @@ namespace LibraryService.WebAPI
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
-                    Title = "LibraryService API",
+                    Title = "Fraud Reports API",
                     Version = "v1",
-                    Description = "A simple example ASP.NET Core Web API for LibraryService"
+                    Description = "API publica para registrar y consultar reportes de fraude (LABCIBE-UNA)"
                 });
             });
         }
@@ -105,33 +65,26 @@ namespace LibraryService.WebAPI
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-
-
-                // Enable middleware to serve generated Swagger as a JSON endpoint.
-                app.UseSwagger();
-
-                // Enable middleware to serve swagger-ui, specifying the Swagger JSON endpoint.
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "LibraryService API v1");
-                });
             }
 
+            // Swagger habilitado tambien en produccion para facilitar la
+            // verificacion del API publicada.
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Fraud Reports API v1");
+            });
 
-
+            // Aplica las migraciones pendientes al iniciar (crea la tabla Frauds).
             using (var scope = app.ApplicationServices.CreateScope())
             {
-                var db = scope.ServiceProvider.GetRequiredService<LibraryContext>();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 db.Database.Migrate();
             }
 
             app.UseRouting();
 
             app.UseCors("Frontend");
-
-            // Agregar los metodos de Auth al Middleware Pipeline.
-            app.UseAuthentication();
-            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {

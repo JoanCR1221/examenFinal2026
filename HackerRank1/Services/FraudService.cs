@@ -19,9 +19,9 @@ namespace LibraryService.WebAPI.Services
 
     public class FraudService : IFraudService
     {
-        private readonly LibraryContext _context;
+        private readonly AppDbContext _context;
 
-        public FraudService(LibraryContext context)
+        public FraudService(AppDbContext context)
         {
             _context = context;
         }
