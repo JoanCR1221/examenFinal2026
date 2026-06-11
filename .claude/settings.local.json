@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(extract-text \"C:\\\\Users\\\\DMUNGUIA\\\\OneDrive - Universidad Nacional de Costa Rica\\\\Escritorio\\\\Examen2Program\\\\ExamenFinal.docx\")"
+    ]
+  }
+}
