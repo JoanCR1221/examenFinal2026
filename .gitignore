@@ -32,3 +32,7 @@ appsettings.*.local.json
 
 # Claude Code local settings
 .claude/
+
+# Archivos de publicacion con credenciales del servidor
+*.publishSettings
+*.pubxml
