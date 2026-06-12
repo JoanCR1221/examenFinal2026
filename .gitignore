@@ -33,6 +33,7 @@ appsettings.*.local.json
 # Claude Code local settings
 .claude/
 
-# Archivos de publicacion con credenciales del servidor
+# Archivos de publicacion y configuracion con credenciales del servidor
 *.publishSettings
 *.pubxml
+HackerRank1/web.config
