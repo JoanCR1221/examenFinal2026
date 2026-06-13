@@ -25,7 +25,7 @@ namespace LibraryService.WebAPI
             // CORS: origenes permitidos configurables (appsettings o variables
             // de entorno Cors__AllowedOrigins__0, ...) para el FE local y el publicado.
             var allowedOrigins = Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-                                 ?? new[] { "http://localhost:5173", "https://examfinallab.netlify.app" };
+                                 ?? new[] { "http://localhost:5173", "https://frontendjoanexam.netlify.app" };
 
             services.AddCors(o => o.AddPolicy("Frontend", p => p
                 .WithOrigins(allowedOrigins)

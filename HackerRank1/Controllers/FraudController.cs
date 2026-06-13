@@ -8,10 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryService.WebAPI.Controllers
 {
-    /// <summary>
-    /// Endpoints publicos para registrar y consultar reportes de fraude.
-    /// No requiere autenticacion.
-    /// </summary>
+
     [ApiController]
     [Route("api/[controller]")]
     public class FraudController : ControllerBase
