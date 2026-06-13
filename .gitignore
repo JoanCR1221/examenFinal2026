@@ -30,6 +30,9 @@ Thumbs.db
 # Example: appsettings.secrets.json
 appsettings.*.local.json
 
+# Archivos con credenciales locales (connection string de Supabase)
+HackerRank1/appsettings.Development.json
+
 # Claude Code local settings
 .claude/
 
